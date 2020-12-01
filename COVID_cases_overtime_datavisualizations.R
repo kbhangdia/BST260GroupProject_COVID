@@ -21,11 +21,12 @@ state_list <- c("CA", "FL", "NYC")
 temp <- USCOVID %>% filter(state %in% state_list)
 ggplot(temp, aes(x = submission_date, y = tot_cases, colour = state)) + 
   geom_line(size = 1) +
-  #abline(v="2020-05-04", col='black')
-  #abline(h = -1:5, v = -2:3, col = "lightgray", lty = 3)
   labs(title = "Covid-19 Total Confirmed Cases by State", x = "Submission Date", y = "Total Number of Cases") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 temp
 
 #How do I add a national average line?
+#Code for vertical line
+  #abline(v="2020-05-04", col='black')
+  #abline(h = -1:5, v = -2:3, col = "lightgray", lty = 3)
