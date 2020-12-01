@@ -55,3 +55,7 @@ clean_df = left_join(clean_df, us_counties, by= "GEOID")
 mask_use_by_county <- mask_use_by_county %>% rename("GEOID" = "COUNTYFP")
 
 clean_df = left_join(clean_df, mask_use_by_county, by= "GEOID")
+
+write.csv(clean_df, file= "/Users/kayleighbhangdia/Desktop/BST260GroupProject_COVID/clean_df.csv")
+
+?write.csv
