@@ -1,0 +1,204 @@
+---
+title: "OLS model"
+author: "Rafael Almeida"
+date: "12/2/2020"
+output: html_document
+---
+
+``````{r, message=FALSE, warning = FALSE}
+library(tidyverse)
+library(lubridate)
+library(haven)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(readr)
+library(kableExtra)
+library(jtools)
+library(huxtable)
+
+```
+
+## Loading the data 
+
+``````{r, message=FALSE, warning = FALSE}
+
+clean_df <- read_csv("clean_df.csv", col_types = cols(date = col_date(format = "%Y-%m-%d")))
+clean_df$state <- as.factor(clean_df$state)
+```
+
+
+## Doing some wrangling on "cases"
+``````{r, message=FALSE, warning = FALSE}
+# Creating a 'cases per 1000 ppl' indicator
+clean_df <- clean_df %>%
+  mutate(cases_per_1000ppl = ((clean_df$cases / clean_df$total_population) * 1000))
+
+head(clean_df)
+
+# There are some observations that report "cases per 1000 ppl" > 1000. For the purposes of our analyses, we will drop these observations. 
+clean_df <- clean_df %>%
+  filter(cases_per_1000ppl < 1000)
+
+# We dropped 120 observations
+```
+
+
+
+## Descriptive statistics
+
+Before devising OLS model(s), we decided to explore potential associations derived from visualizations.
+
+
+#Question 1 
+The epidemiology of the COVID-19 respiratory syndrome suggests that more densely populated counties are more prone to spreading the virus given the airborne nature of the infection. Is this consistent with the data?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+
+# Creating the scatter plot of Cases / 1000 ppl over County density
+
+clean_df %>% 
+   ggplot(aes(x = pop_density_sq_km, y = cases_per_1000ppl )) +
+   geom_point(color = "dark blue") +
+   xlab("Pop density / sq_km") + 
+   ylab("cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Population Densisty in the U.S in 30-Nov-2020",
+              caption = "Data source: XXXXXXX." ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+  
+   theme_bw()
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, we cannot see a strong association between Cases / 1000 population and Population density.
+</div>
+
+
+#Question 2
+Continuing to explore the relationship between social distancing and cases, we could hypothesize that more people working from home is associated with less cases. Is this consistent with the data?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Creating a 'cases per 1000 ppl' indicator
+clean_df <- clean_df %>%
+  mutate(homeoffice_per_1000ppl = ((clean_df$total_pop_worked_home / clean_df$total_population) * 1000))
+head(clean_df)
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = homeoffice_per_1000ppl, y = cases_per_1000ppl )) +
+   geom_point(color = "dark blue") +
+   xlab("Home workers / 1000 pop") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Homeworkers Density in the U.S in 30-Nov-2020",
+              caption = "Data source: XXXXXXX." ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+  geom_smooth(method='lm', formula= y~x) +
+
+   theme_bw()
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, it seems that this relationship should be explored with an OLS,controlled for other covariates. The plot suggests that 'cases / 1000 pop' is positively associated with 'home workers / 1000 pop', which is very counter-intuitive.
+</div>
+
+#Question 3
+Following the 'standard' protocols for COVID-19 prevention, our third graphical analysis explores the association between mask wearing and Covid-19 incidence. 
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating a 'high mask usage' indicator
+clean_df <- clean_df %>%
+  mutate(high_mask_usage_sum = (clean_df$ALWAYS + clean_df$FREQUENTLY))
+
+
+clean_df$high_mask_usage <- ifelse(clean_df$high_mask_usage_sum > 0.6, 1, 0)
+head(clean_df)
+
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = high_mask_usage_sum, y = cases_per_1000ppl, color = high_mask_usage ) ) +
+   geom_point() +
+   xlab("Always/Frequently wear masks (Population Proportion within the county)") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus High Mask usage in the U.S in 30-Nov-2020",
+        subtitle = "High Mask usage = Above 60% of county population always/frequently wear masks",
+              caption = "Data source: XXXXXXX." ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+    theme_bw()
+```
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Although we observe more counties fall above the 0.60 high mask usage threshold, we cannot observe a systematically different association between high mask usage and Case/1000 pop (considering just the graphical analysis).
+</div>
+
+# OLS model assessing Questions 1, 2, and 3
+Can we explain the variation in Cases/pop by population density, working from home, and mask - wearing?
+
+
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 1
+model1 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage, data = clean_df )
+summ(model1)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Using just the 3 covariates explored in Q1, Q2, and Q3, we cannot see statistical significance in high-mask-usage. A marginal change in population density is associated with a mean increase of .06 in cases/1000 ppl (p<0.00) and, counter-intuitively, a marginal change in homeoffice workers / 1000ppl is associated with a mean increase of 1.21 cases (p<0.00). 
+</div>
+
+#Question 4
+It is reasonable to assume that there are some Omitted Variable Bias in coefficient(s) from Model 1. 
+Intuitively (and from the media coverage), we know that low-income workers are less likely to work from home. Let's include population % below the poverty line and see how the model 'responds'.
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 3
+model2 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage + percent_below_poverty_level, data = clean_df )
+summ(model2)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Indeed, part of the variation in cases is explained by the poverty level. One percentage point increase in the county population below poverty level is associated with a mean increase of 2.16 cases/1000 ppl (p<0.00). 
+</div>
+
+#Question 5
+Since health regulations (and the epidemic response, in general) varies a lot across states, we could try to control by state to see how much of the Case variation is explained by the state. We also could see if the other coefficients would change in sign and/or magnitude.
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 3
+model3 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage + percent_below_poverty_level + state, data = clean_df )
+summ(model3)
+```
+## Comparing Models 1, 2, and 3
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the Comparative table
+export_summs(model1, model2, model3)
+```
+
+
+
+
