@@ -56,6 +56,35 @@ mask_use_by_county <- mask_use_by_county %>% rename("GEOID" = "COUNTYFP")
 
 clean_df = left_join(clean_df, mask_use_by_county, by= "GEOID")
 
+clean_df$case_rate=(clean_df$cases/clean_df$total_population)*1000
+
 write.csv(clean_df, file= "/Users/kayleighbhangdia/Desktop/BST260GroupProject_COVID/clean_df.csv")
 
-?write.csv
+
+#three groups of the variables for the bivariate map 
+summary(clean_df$case_rate)
+case_rate_quantile<- quantile(clean_df$case_rate,c(0.33,0.66,1), na.rm = TRUE)
+poverty_rate_quantile<- quantile(clean_df$percent_below_poverty_level,c(0.33,0.66,1), na.rm = TRUE)
+
+clean_df<- clean_df %>% mutate(y= ifelse(percent_below_poverty_level<poverty_rate_quantile[1],1,ifelse(percent_below_poverty_level<poverty_rate_quantile[2],2,3)) ,
+                         x= ifelse(case_rate<case_rate_quantile[1],1,ifelse(case_rate<case_rate_quantile[2],2,3))  )  
+
+clean_df$x = as.numeric(clean_df$x)
+clean_df$y = as.numeric(clean_df$y)
+ggplot(data=clean_df,aes(x=case_rate,y=percent_below_poverty_level,color=atan(y/x),alpha=x+y))+
+  geom_point(size=1)+  guides(alpha=F,color=F)+
+  geom_hline(yintercept=poverty_rate_quantile,color="gray20",linetype=2)+
+  geom_vline(xintercept=case_rate_quantile,color="gray20",linetype=2)+
+  scale_color_viridis(name="Color scale")+theme_minimal()+
+  theme(plot.caption=element_text(size = 9, hjust=0),
+        panel.grid=element_blank()) +
+  
+  labs(x="Housing units in 2015 relative to 2010 (log scale)",
+       y="Population in 2015 relative to 2010 (log scale)",
+       caption="@lenkiefer Source: U.S. Census Bureau\nEach dot one county, lines divide (univariate) terciles")+
+  # limit the rang e
+  scale_x_continuous(breaks=c(case_rate_quantile),
+                labels=round(c(case_rate_quantile),2)) +
+  scale_y_continuous(breaks=c(poverty_rate_quantile),
+                labels=round(c(poverty_rate_quantile),2)) 
+
