@@ -44,6 +44,7 @@ household_size_quantile <-quantile(clean_df_updated_quantiles$avg_household_size
 percent_over_65_quantile <-quantile(clean_df_updated_quantiles$percent_over_65,c(0.33,0.66,1), na.rm = TRUE)
 pop_density_quantile <-quantile(clean_df_updated_quantiles$pop_density_sq_km,c(0.33,0.66,1), na.rm = TRUE)
 worked_home_quantile<-quantile(clean_df_updated_quantiles$homeoffice_per_1000ppl,c(0.33,0.66,1), na.rm = TRUE)
+non_white_quantile <- quantile(clean_df_updated_quantiles$non_white_proportion ,c(0.33,0.66,1), na.rm = TRUE)
 
 #categorical variable 1-3 to represent the three quantiles 
 clean_df_updated_quantiles<- clean_df_updated_quantiles %>% mutate(
@@ -53,7 +54,8 @@ clean_df_updated_quantiles<- clean_df_updated_quantiles %>% mutate(
                                a= ifelse(avg_household_size<household_size_quantile[1],1,ifelse(avg_household_size<household_size_quantile[2],2,3)),
                                b= ifelse(percent_over_65<percent_over_65_quantile[1],1,ifelse(percent_over_65<percent_over_65_quantile[2],2,3)),
                                c= ifelse(pop_density_sq_km<pop_density_quantile[1],1,ifelse(pop_density_sq_km<pop_density_quantile[2],2,3)),
-                               d= ifelse(homeoffice_per_1000ppl<worked_home_quantile[1],1,ifelse(homeoffice_per_1000ppl<worked_home_quantile[2],2,3))
+                               d= ifelse(homeoffice_per_1000ppl<worked_home_quantile[1],1,ifelse(homeoffice_per_1000ppl<worked_home_quantile[2],2,3)),
+                               e= ifelse(non_white_proportion<non_white_quantile[1],1,ifelse(non_white_proportion<non_white_quantile[2],2,3))
                                )  
 #transform the indicator variables to be numeric 
 clean_df_updated_quantiles$x = as.numeric(clean_df_updated_quantiles$x)
@@ -63,6 +65,8 @@ clean_df_updated_quantiles$a = as.numeric(clean_df_updated_quantiles$a)
 clean_df_updated_quantiles$b = as.numeric(clean_df_updated_quantiles$b)
 clean_df_updated_quantiles$c = as.numeric(clean_df_updated_quantiles$c)
 clean_df_updated_quantiles$d = as.numeric(clean_df_updated_quantiles$d)
+clean_df_updated_quantiles$e = as.numeric(clean_df_updated_quantiles$e)
+
 
 #single variable for covid case rate and poverty 
 clean_df_updated_quantiles$bivariate <- ifelse(clean_df_updated_quantiles$x==1 & clean_df_updated_quantiles$y==1, 1, 
@@ -134,6 +138,18 @@ clean_df_updated_quantiles$bivariate_worked_home <- ifelse(clean_df_updated_quan
                                                                                                      ifelse(clean_df_updated_quantiles$x==2 & clean_df_updated_quantiles$d==3, 8,
                                                                                                             ifelse(clean_df_updated_quantiles$x==3 & clean_df_updated_quantiles$d==3, 9, 
                                                                                                                    FALSE)))))))))
+#single variable for covid case rate and proportion non white 
+clean_df_updated_quantiles$bivariate_non_white <- ifelse(clean_df_updated_quantiles$x==1 & clean_df_updated_quantiles$e==1, 1, 
+                                                           ifelse(clean_df_updated_quantiles$x==2 & clean_df_updated_quantiles$e==1, 2, 
+                                                                  ifelse(clean_df_updated_quantiles$x==3 & clean_df_updated_quantiles$e==1, 3,
+                                                                         ifelse(clean_df_updated_quantiles$x==1 & clean_df_updated_quantiles$e==2, 4,
+                                                                                ifelse(clean_df_updated_quantiles$x==2 & clean_df_updated_quantiles$e==2, 5,
+                                                                                       ifelse(clean_df_updated_quantiles$x==3 & clean_df_updated_quantiles$e==2, 6,
+                                                                                              ifelse(clean_df_updated_quantiles$x==1 & clean_df_updated_quantiles$e==3, 7,
+                                                                                                     ifelse(clean_df_updated_quantiles$x==2 & clean_df_updated_quantiles$e==3, 8,
+                                                                                                            ifelse(clean_df_updated_quantiles$x==3 & clean_df_updated_quantiles$e==3, 9, 
+                                                                                                                   FALSE)))))))))
+
 
 #loading US county map data and plotting base map 
 AllCounty <- map_data("county")
@@ -154,7 +170,7 @@ AllCounty$bivariate_household <- as.factor(AllCounty$bivariate_household)
 AllCounty$bivariate_over_65 <- as.factor(AllCounty$bivariate_over_65)
 AllCounty$bivariate_pop_density <- as.factor(AllCounty$bivariate_pop_density)
 AllCounty$bivariate_worked_home <- as.factor(AllCounty$bivariate_worked_home)
-
+AllCounty$bivariate_non_white <- as.factor(AllCounty$bivariate_non_white)
 #testing out with basic map 
 AllCounty %>% ggplot(aes(x = long, y = lat, group = group, fill = cases_per_1000ppl)) + 
   geom_polygon(color = "NA") +
@@ -373,3 +389,35 @@ ggdraw() +
   draw_plot(map_home, 0, 0, 1, 1) +
   draw_plot(lg_home, 0.05, 0.075, 0.25, 0.25)
 
+#bivarate map of cases and poverty 
+map_race <- AllCounty %>% ggplot(aes(x = long, y = lat, group = group, fill = bivariate_non_white)) + 
+  geom_polygon(color = "NA") +
+  theme(legend.position = "None",
+        panel.grid.major = element_blank(), 
+        panel.background = element_blank(),
+        axis.title = element_blank(), 
+        axis.text = element_blank(),
+        axis.ticks = element_blank()) +
+  coord_fixed(1.3) +
+  labs(
+    title = "Covid 19 rates and race in the US",
+    subtitle = "bivariate choropleth map")
+
+cbp1 <- c("#E8E8E8", "#ACE4E4", "#5AC8C8", "#DFB0D6",
+          "#A5ADD3", "#5698B9", "#BE64AC", "#8C62AA", "#3B4994")
+map_race <-map_poverty + scale_fill_manual(values = cbp1)
+map_race 
+
+
+#legend for map of cases and poverty
+melt(matrix(1:9,nrow=3))
+legendGoal=melt(matrix(1:9,nrow=3))
+test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
+test<- test + scale_fill_manual(name="",values=cbp1)
+lg_race<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing Prop non-White-->")
+lg_race
+
+#map plus legend for cases and poverty 
+ggdraw() +
+  draw_plot(map_race, 0, 0, 1, 1) +
+  draw_plot(lg_race, 0.05, 0.075, 0.25, 0.25)
