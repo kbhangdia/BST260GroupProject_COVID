@@ -1,0 +1,140 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(zoo)
+library(maps)
+library(dslabs)
+library(stringr)
+library(dplyr)
+library(viridis)
+library(RColorBrewer)
+library(ggrepel)
+```
+
+```{r}
+clean_df_updated = read_csv("clean_df_updated.csv")
+
+#Loading US county map and renaming 
+Counties_df <- map_data("county")
+
+clean_df_updated$county = tolower(clean_df_updated$county)
+
+Counties_df <- Counties_df %>% rename("county" = "subregion")
+
+#Merging map data with cleand_df
+Clean_df_joined <- left_join(clean_df_updated, Counties_df, by = "county")
+
+Clean_df_joined <- Clean_df_joined %>% filter(!is.na(long))
+```
+
+
+```{r}
+#Plotting a map of total cases by county
+Clean_df_joined %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = cases)) +
+  geom_polygon(aes(fill = cases), color = "grey", size = .1) +
+  ggtitle("Total COVID19 cases by county") +
+  scale_fill_viridis_c(name = "Cases") +
+  theme(panel.grid.major = element_blank(), 
+        panel.background = element_blank(),
+        axis.title = element_blank(), 
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+
+#Plotting a map of case rates by county (cases per 1,000)
+Clean_df_joined %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = cases_per_1000ppl)) +
+  geom_polygon(aes(fill = cases_per_1000ppl), color = "grey", size = .1) +
+  ggtitle("COVID19 Case rates by county") +
+  scale_fill_viridis_c(name = "Cases per 1,000") + 
+  theme(panel.grid.major = element_blank(), 
+        panel.background = element_blank(),
+        axis.title = element_blank(), 
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+```
+
+```{r}
+#Scatterplots with case rates and SES indicators
+
+#Population Density and COVID Case Rates
+
+clean_df_updated %>% 
+   ggplot(aes(x = pop_density_sq_km, y = cases_per_1000ppl)) +
+   geom_point(color = "blue") +
+   xlab("Density / sq_km") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus Population Density in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+
+#Average Houshold Size and COVID Case Rates
+
+clean_df_updated %>% 
+   ggplot(aes(x = avg_household_size, y = cases_per_1000ppl)) +
+   geom_point(color = "blue") +
+   xlab("Average household size") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus average household size in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+
+#Homeoffice and COVID Case Rates
+
+clean_df_updated %>% 
+   ggplot(aes(x = homeoffice_per_1000ppl, y = cases_per_1000ppl)) +
+   geom_point(color = "blue") +
+   xlab("Home workers / 1000 pop") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus Homeworkers Density in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+
+#Poverty and COVID Case Rates
+
+clean_df_updated %>% 
+   ggplot(aes(x = percent_below_poverty_level, y = cases_per_1000ppl)) + geom_point(color = "blue") +
+   xlab("Percent of population below poverty level") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+
+
+#Population over 65 and COVID case rates
+
+#Create a new variable for % population over 65
+clean_df_updated_ <- clean_df_updated %>%
+  mutate(percent_over_65 = (clean_df_updated$total_over_65 / clean_df_updated$total_population)*100)
+
+#Plot Population over 65 and COVID case rates
+clean_df_updated_ %>% 
+   ggplot(aes(x = percent_over_65, y = cases_per_1000ppl)) + geom_point(color = "blue") +
+   xlab("Percent of population over 65") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus population over 65 in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+
+```
+```{r}
+#Race and COVID Case Rates --> pending.. ask how to define the varaible "race"
+
+clean_df_updated %>% 
+   ggplot(aes(x = percent_below_poverty_level, y = cases_per_1000ppl)) + geom_point(color = "blue") +
+   xlab("Percent of population below poverty level") +
+   ylab("Case Rate (per 1,000)") +
+   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+  scale_y_continuous(limits = c(0, 1000)) +
+  theme_bw()
+```
+
