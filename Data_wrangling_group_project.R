@@ -86,6 +86,20 @@ clean_df <- clean_df %>%
 clean_df$high_mask_usage <- ifelse(clean_df$high_mask_usage_sum > 0.6, 1, 0)
 head(clean_df)
 
+
+# Creating proportions for ethnicity 
+clean_df <- clean_df %>%
+  mutate(black_proportion = (clean_df$Black / clean_df$total_population))
+
+clean_df <- clean_df %>%  
+  mutate(white_proportion = (clean_df$White / clean_df$total_population)) 
+
+clean_df <- clean_df %>%
+  mutate(latino_proportion = (clean_df$Hispanic_Latino / clean_df$total_population))
+
+clean_df <- clean_df %>%
+  mutate(non_white_proportion = (1 - clean_df$white_proportion))
+
 clean_df_updated=clean_df
 #saving this df as a cvs file 
 write.csv(clean_df_updated, file= "/Users/kayleighbhangdia/Desktop/BST260GroupProject_COVID/clean_df_updated.csv")

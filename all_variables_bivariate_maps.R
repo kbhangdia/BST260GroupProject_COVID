@@ -32,8 +32,8 @@ library(viridis)
 library(RColorBrewer)
 
 #new variable for %of population >65 years 
-clean_df_updated_quantiles <- clean_df_updated_quantiles %>%
-  mutate(percent_over_65 = (clean_df_updated_quantiles$total_over_65 / clean_df_updated_quantiles$total_population)*100)
+clean_df_updated_quantiles <- clean_df_updated %>%
+  mutate(percent_over_65 = (clean_df_updated$total_over_65 / clean_df_updated$total_population)*100)
 
 #three groups of the variables for the bivariate map 
 summary(clean_df_updated_quantiles$cases_per_1000ppl)
@@ -192,14 +192,8 @@ melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
-
-lg_poverty<- test 
-lg_poverty<-lg_poverty + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_poverty<-lg_poverty + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing Poverty-->")
-lg_poverty<-lg_poverty+theme(axis.text=element_blank())
-lg_poverty<-lg_poverty+theme(line=element_blank())
-lg_poverty
+lg_poverty<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing Poverty-->")
+lg_poverty 
 
 #map plus legend for cases and poverty 
 ggdraw() +
@@ -232,14 +226,9 @@ melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
+lg_mask<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing mask use-->")
+lg_mask 
 
-lg_mask<- test 
-lg_mask<-lg_mask + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_mask<-lg_mask + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing mask use-->")
-lg_mask<-lg_mask+theme(axis.text=element_blank())
-lg_mask<-lg_mask+theme(line=element_blank())
-lg_mask
 
 #map plus legend for cases and mask use  
 ggdraw() +
@@ -268,18 +257,13 @@ map_household
 
 
 #legend for map of cases and household size 
+library(reshape2)
 melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
-
-lg_household<- test 
-lg_household<-lg_household + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_household<-lg_household + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing household size-->")
-lg_household<-lg_household+theme(axis.text=element_blank())
-lg_household<-lg_household+theme(line=element_blank())
-lg_household
+lg_household<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing household size-->")
+lg_household 
 
 #map plus legend for cases and household size 
 ggdraw() +
@@ -312,14 +296,8 @@ melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
-
-lg_65<- test 
-lg_65<-lg_65 + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_65<-lg_65 + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing percent over 65 years-->")
-lg_65<-lg_65+theme(axis.text=element_blank())
-lg_65<-lg_65+theme(line=element_blank())
-
+lg_65<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing percent over 65-->")
+lg_65 
 
 #map plus legend for cases and % over 65
 ggdraw() +
@@ -352,14 +330,8 @@ melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
-
-lg_density<- test 
-lg_density<-lg_density + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_density<-lg_density + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing population density-->")
-lg_density<-lg_density+theme(axis.text=element_blank())
-lg_density<-lg_density+theme(line=element_blank())
-
+lg_density<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing population density-->")
+lg_density 
 
 #map plus legend for cases and population density 
 ggdraw() +
@@ -393,14 +365,8 @@ melt(matrix(1:9,nrow=3))
 legendGoal=melt(matrix(1:9,nrow=3))
 test<-ggplot(legendGoal, aes(Var2,Var1,fill = as.factor(value)))+ geom_tile()
 test<- test + scale_fill_manual(name="",values=cbp1)
-test<-test + theme(legend.position="none")
-
-lg_home<- test 
-lg_home<-lg_home + theme(axis.title.x=element_text(size=rel(.60),color=bvColors[3])) + xlab("Increasing COVID rates -->")
-lg_home<-lg_home + theme(axis.title.y=element_text(size=rel(.60),color=bvColors[3])) + ylab("Increasing WFH-->")
-lg_home<-lg_home+theme(axis.text=element_blank())
-lg_home<-lg_home+theme(line=element_blank())
-
+lg_home<-test + theme(legend.position="none", axis.text=element_blank(),line=element_blank()) + xlab("Increasing COVID rates -->") + ylab("Increasing WFH-->")
+lg_home 
 
 #map plus legend for cases and worked from home 
 ggdraw() +
