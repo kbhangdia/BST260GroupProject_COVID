@@ -199,6 +199,60 @@ summ(model3)
 export_summs(model1, model2, model3)
 ```
 
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
 
+</div>
 
+# Exploring another issue: Racial inequality
+
+#Question 6
+Is there a systematic difference in the distribution cases/1000 ppl depending on the counties' predominant ethnic group?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating proportions for ethnicity 
+clean_df <- clean_df %>%
+  mutate(black_proportion = (clean_df$Black / clean_df$total_population))
+
+clean_df <- clean_df %>%  
+  mutate(white_proportion = (clean_df$White / clean_df$total_population)) 
+
+clean_df <- clean_df %>%
+   mutate(latino_proportion = (clean_df$Hispanic_Latino / clean_df$total_population))
+
+clean_df <- clean_df %>%
+   mutate(non_white_proportion = (1 - clean_df$white_proportion))
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = non_white_proportion, y = cases_per_1000ppl) ) +
+   geom_point(color = "dark blue") +
+   xlab("Non-White Population Proportion within the county") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Non-white population proportion in U.S. counties in 30-Nov-2020",
+                      caption = "Data source: XXXXXXX." ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+     geom_smooth(method='lm', formula= y~x) +
+    theme_bw()
+
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, the association between Cases/1000 pop does not seem very strong. Let's see how an OLS model capture this relationship. 
+</div>
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 3
+model4 = lm(cases_per_1000ppl~non_white_proportion + as.factor(state), data = clean_df )
+summ(model4)
+```
 
