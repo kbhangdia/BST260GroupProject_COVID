@@ -42,9 +42,9 @@ Clean_df_joined <- Clean_df_joined %>% filter(!is.na(long))
 #Plotting a map of total cases by county
 Clean_df_joined %>%
   ggplot(aes(x = long, y = lat, group = group, fill = cases)) +
-  geom_polygon(aes(fill = cases), color = NA) +
+  geom_polygon(aes(fill = cases), color = "NA") +
   ggtitle("Total COVID19 cases by county") +
-  scale_fill_viridis_c(name = "Cases") +
+  scale_fill_viridis_c(name = "Cases", direction = -1) +
   theme(panel.grid.major = element_blank(), 
         panel.background = element_blank(),
         axis.title = element_blank(), 
@@ -55,9 +55,9 @@ Clean_df_joined %>%
 #Plotting a map of case rates by county (cases per 1,000)
 Clean_df_joined %>%
   ggplot(aes(x = long, y = lat, group = group, fill = cases_per_1000ppl)) +
-  geom_polygon(aes(fill = cases_per_1000ppl),color = NA) +
+  geom_polygon(aes(fill = cases_per_1000ppl), color = NA) +
   ggtitle("COVID19 Case rates by county") +
-  scale_fill_viridis_c(name = "Cases per 1000") +
+  scale_fill_viridis_c(name = "Cases", direction = -1) +
   theme(panel.grid.major = element_blank(), 
         panel.background = element_blank(),
         axis.title = element_blank(), 
@@ -76,7 +76,7 @@ clean_df_updated %>%
    geom_point(color = "blue") +
    xlab("Density / sq_km") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus Population Density in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus Population Density in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
@@ -87,7 +87,7 @@ clean_df_updated %>%
    geom_point(color = "blue") +
    xlab("Average household size") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus average household size in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus average household size in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
@@ -98,7 +98,7 @@ clean_df_updated %>%
    geom_point(color = "blue") +
    xlab("Home workers / 1000 pop") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus Homeworkers Density in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus Homeworkers Density in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
@@ -108,7 +108,7 @@ clean_df_updated %>%
    ggplot(aes(x = percent_below_poverty_level, y = cases_per_1000ppl)) + geom_point(color = "blue") +
    xlab("Percent of population below poverty level") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
@@ -124,20 +124,22 @@ clean_df_updated_ %>%
    ggplot(aes(x = percent_over_65, y = cases_per_1000ppl)) + geom_point(color = "blue") +
    xlab("Percent of population over 65") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus population over 65 in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus population over 65 in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
-```
-```{r}
-#Race and COVID Case Rates --> pending.. ask how to define the varaible "race"
+#Plot % Population below poverty level and COVID case rates
 
 clean_df_updated %>% 
    ggplot(aes(x = percent_below_poverty_level, y = cases_per_1000ppl)) + geom_point(color = "blue") +
    xlab("Percent of population below poverty level") +
    ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: XXXXXXX." ) + 
+   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
+
+```
+
+
 ```
 
