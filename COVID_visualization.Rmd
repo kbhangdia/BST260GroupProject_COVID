@@ -3,6 +3,7 @@ title: "R Notebook"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
@@ -57,7 +58,7 @@ Clean_df_joined %>%
   ggplot(aes(x = long, y = lat, group = group, fill = cases_per_1000ppl)) +
   geom_polygon(aes(fill = cases_per_1000ppl), color = NA) +
   ggtitle("COVID19 Case rates by county") +
-  scale_fill_viridis_c(name = "Cases", direction = -1) +
+  scale_fill_viridis_c(name = "Cases per 1000", direction = -1) +
   theme(panel.grid.major = element_blank(), 
         panel.background = element_blank(),
         axis.title = element_blank(), 
@@ -128,15 +129,7 @@ clean_df_updated_ %>%
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
-#Plot % Population below poverty level and COVID case rates
 
-clean_df_updated %>% 
-   ggplot(aes(x = percent_below_poverty_level, y = cases_per_1000ppl)) + geom_point(color = "blue") +
-   xlab("Percent of population below poverty level") +
-   ylab("Case Rate (per 1,000)") +
-   labs(title = "Covid-19 cases versus poverty level in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
-  scale_y_continuous(limits = c(0, 1000)) +
-  theme_bw()
 
 ```
 
