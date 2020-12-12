@@ -6,10 +6,6 @@ output:
   pdf_document: default
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
 ```{r}
 library(tidyverse)
 library(lubridate)
@@ -22,6 +18,8 @@ library(viridis)
 library(RColorBrewer)
 library(ggrepel)
 ```
+
+*Mapping the US COVID-19 total cases and case rates is important to understand how they are being distributed, monitoring, decision-making and implementation of policy measures to control the outbreak and prevent its further dissemination*
 
 ```{r}
 clean_df_updated = read_csv("clean_df_updated.csv")
@@ -65,7 +63,10 @@ Clean_df_joined %>%
         axis.text = element_blank(),
         axis.ticks = element_blank()) +
   coord_fixed(1.3)
+
 ```
+
+*The first map shows total cases over counties in the US in November 30th, 2020. The darker collors suggest counties with higher total number of cases. However, this indicator can be confusing to compare between counties since they all have different population. Cases rates (cases per 1,000 population) are more informative to compare the virus incidence between counties since it adjust the different populations towards to a same comparator (1,000 population). From the cases per 1,000 map we can not see a spacial association with COVID-19 case rates since higher case rate counties are distributed across all the country and high variance of case rates exist in similar geographical regions.*
 
 ```{r}
 #Scatterplots with case rates and SES indicators
@@ -81,6 +82,11 @@ clean_df_updated %>%
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
+```
+
+*Population density is another factor that has long been connected to epidemics. The epidemiology of the COVID-19 respiratory syndrome suggests that more densely populated counties are more prone to spreading the virus given the airborne nature of the infection. However from the graph there is no evidence of a strong association between case rates and population density in the US.*
+
+```{r}
 #Average Houshold Size and COVID Case Rates
 
 clean_df_updated %>% 
@@ -91,6 +97,12 @@ clean_df_updated %>%
    labs(title = "Covid-19 cases versus average household size in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
+
+```
+
+*SARS-CoV-2, the official name for the coronavirus that causes COVID-19, is more transmissible in households than either SARS or MERS. More than 19% of people in the samehousolh as a COVID-19 patient, or nearly 1 in 5, can expect to develop the infection. Therefore one could hypothesyze that higher household sizes, higer infection rates. The graph, however, does not suggest such positive relation when analyzing only the variable of household size against case rates among counties in the US*
+
+```{r}
 
 #Homeoffice and COVID Case Rates
 
@@ -103,6 +115,12 @@ clean_df_updated %>%
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
+```
+
+*Working from home is a social distancing measure that could help reducing the spread of the virus. One could hypothesize that more people working from home is associated with less cases. Despite high variance, the graph suggests that case rate may be positively associated with ‘home workers / 1000 pop’ which is very counter-intuitive and will be explored by OLS in the next section*
+
+
+```{r}
 #Poverty and COVID Case Rates
 
 clean_df_updated %>% 
@@ -113,6 +131,11 @@ clean_df_updated %>%
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
 
+```
+
+*Socioeconomic status has often been linked with Covid-19 rates. In the early stages of the outbreak in UK, for instance, regions with higher SES were over-represented among the sick. Explanations attributed the excess to more frequent traveling and social contacts, alongside better access to testing. Later on, however, infection rates started to rise in densely populated areas, especially those suffering higher levels of deprivation, affecting primarily people from lower socioeconomic urban areas, many of whom also belonged to ethnic minorities. From the graph we cannot conclude any strong association; the disease appears to have spread along all class lines*
+
+```{r}
 
 #Population over 65 and COVID case rates
 
@@ -128,11 +151,8 @@ clean_df_updated_ %>%
    labs(title = "Covid-19 cases versus population over 65 in the U.S in 30-Nov-2020",caption = "Data source: US Census and NYTimes" ) + 
   scale_y_continuous(limits = c(0, 1000)) +
   theme_bw()
-
-
-
+  
 ```
 
-
-```
+*Age composition has been singled out in the present pandemic, as associated with case and mortality rates. More susceptibility to contagion has been attributed to the presence of numerous elderly people, defining such age structure as creating vulnerability to Covid-19 and especially, to its complications. From the plot we may suggest some positive relation between percent of population over 65 and case rates, however it is not conclusive*
 
