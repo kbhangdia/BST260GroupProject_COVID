@@ -1,0 +1,409 @@
+---
+title: "OLS model"
+date: "12/2/2020"
+output: html_document
+---
+
+``````{r, message=FALSE, warning = FALSE}
+library(tidyverse)
+library(lubridate)
+library(haven)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(readr)
+library(kableExtra)
+library(jtools)
+library(huxtable)
+library(stargazer)
+
+```
+
+## Loading the data 
+
+``````{r, message=FALSE, warning = FALSE}
+
+clean_df <- read_csv("clean_df.csv", col_types = cols(date = col_date(format = "%Y-%m-%d")))
+clean_df$state <- as.factor(clean_df$state)
+```
+
+
+## Doing some wrangling on "cases"
+``````{r, message=FALSE, warning = FALSE}
+# Creating a 'cases per 1000 ppl' indicator
+clean_df <- clean_df %>%
+  mutate(cases_per_1000ppl = ((clean_df$cases / clean_df$total_population) * 1000))
+
+head(clean_df)
+
+# There are some observations that report "cases per 1000 ppl" > 1000. For the purposes of our analyses, we will drop these observations. 
+clean_df <- clean_df %>%
+  filter(cases_per_1000ppl < 1000)
+
+# We dropped 120 observations
+```
+
+
+
+## Descriptive statistics
+
+Before devising OLS model(s), we decided to explore potential associations derived from visualizations.
+
+
+#Question 1 
+The epidemiology of the COVID-19 respiratory syndrome suggests that more densely populated counties are more prone to spreading the virus given the airborne nature of the infection. Is this consistent with the data?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+
+# Creating the scatter plot of Cases / 1000 ppl over County density
+
+clean_df %>% 
+   ggplot(aes(x = pop_density_sq_km, y = cases_per_1000ppl )) +
+   geom_point(color = "dark blue") +
+   xlab("Pop density / sq_km") + 
+   ylab("cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Population Densisty in the U.S in 30-Nov-2020",
+              caption = "Data source: US Census and New York Times" ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+  
+   theme_bw()
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, we cannot see a strong association between Cases / 1000 population and Population density.
+</div>
+
+
+#Question 2
+Continuing to explore the relationship between social distancing and cases, we could hypothesize that more people working from home is associated with less cases. Is this consistent with the data?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Creating a 'cases per 1000 ppl' indicator
+clean_df <- clean_df %>%
+  mutate(homeoffice_per_1000ppl = ((clean_df$total_pop_worked_home / clean_df$total_population) * 1000))
+head(clean_df)
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = homeoffice_per_1000ppl, y = cases_per_1000ppl )) +
+   geom_point(color = "dark blue") +
+   xlab("Home workers / 1000 pop") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Homeworkers Density in the U.S in 30-Nov-2020",
+              caption = "Data source: US Census and New York Times" ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+  geom_smooth(method='lm', formula= y~x) +
+
+   theme_bw()
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, it seems that this relationship should be explored with an OLS,controlled for other covariates. The plot suggests that 'cases / 1000 pop' is positively associated with 'home workers / 1000 pop', which is very counter-intuitive.
+</div>
+
+#Question 3
+Following the 'standard' protocols for COVID-19 prevention, our third graphical analysis explores the association between mask wearing and Covid-19 incidence. 
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating a 'high mask usage' indicator
+clean_df <- clean_df %>%
+  mutate(high_mask_usage_sum = (clean_df$ALWAYS + clean_df$FREQUENTLY))
+
+
+clean_df$high_mask_usage <- ifelse(clean_df$high_mask_usage_sum > 0.6, 1, 0)
+head(clean_df)
+
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = high_mask_usage_sum, y = cases_per_1000ppl, color = high_mask_usage ) ) +
+   geom_point() +
+   xlab("Always/Frequently wear masks (Population Proportion within the county)") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus High Mask usage in the U.S in 30-Nov-2020",
+        subtitle = "High Mask usage = Above 60% of county population always/frequently wear masks",
+              caption = "Data source: US Census and New York Times" ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+    theme_bw()
+```
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Although we observe more counties fall above the 0.60 high mask usage threshold, we cannot observe a systematically different association between high mask usage and Case/1000 pop (considering just the graphical analysis).
+</div>
+
+# OLS model assessing Questions 1, 2, and 3
+Can we explain the variation in Cases/pop by population density, working from home, and mask - wearing?
+
+
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 1
+model1 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage, data = clean_df )
+summ(model1)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Using just the 3 covariates explored in Q1, Q2, and Q3, we cannot see statistical significance in high-mask-usage. A marginal change in population density is associated with a mean increase of .06 in cases/1000 ppl (p<0.00) and, counter-intuitively, a marginal change in homeoffice workers / 1000ppl is associated with a mean increase of 1.21 cases (p<0.00). 
+</div>
+
+#Question 4
+It is reasonable to assume that there are some Omitted Variable Bias in coefficient(s) from Model 1. 
+Intuitively (and from the media coverage), we know that low-income workers are less likely to work from home. Let's include population % below the poverty line and see how the model 'responds'.
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 3
+model2 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage + percent_below_poverty_level, data = clean_df )
+summ(model2)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Indeed, part of the variation in cases is explained by the poverty level. One percentage point increase in the county population below poverty level is associated with a mean increase of 2.16 cases/1000 ppl (p<0.00). 
+</div>
+
+#Question 5
+Since health regulations (and the epidemic response, in general) varies a lot across states, we could try to control by state to see how much of the Case variation is explained by the state. We also could see if the other coefficients would change in sign and/or magnitude.
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 3
+model3 = lm(cases_per_1000ppl~homeoffice_per_1000ppl + pop_density_sq_km + high_mask_usage + percent_below_poverty_level + state, data = clean_df )
+summ(model3)
+```
+## Comparing Models 1, 2, and 3
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the Comparative table
+export_summs(model1, model2, model3)
+```
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+
+</div>
+
+# Exploring another issue: Racial inequality
+
+#Question 6
+Is there a systematic difference in the distribution cases/1000 ppl depending on the counties' predominant ethnic group? More specifically, being predominantly white / non-white is associated helps explain the variability in cases across counties?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating proportions for ethnicity 
+clean_df <- clean_df %>%
+  mutate(black_proportion = (clean_df$Black / clean_df$total_population))
+
+clean_df <- clean_df %>%  
+  mutate(white_proportion = (clean_df$White / clean_df$total_population)) 
+
+clean_df <- clean_df %>%
+   mutate(latino_proportion = (clean_df$Hispanic_Latino / clean_df$total_population))
+
+clean_df <- clean_df %>%
+   mutate(non_white_proportion = (1 - clean_df$white_proportion))
+
+# Creating the scatter plot of Cases / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = non_white_proportion, y = cases_per_1000ppl) ) +
+   geom_point(color = "dark blue") +
+   xlab("Non-White Population Proportion within the county") + 
+   ylab("Cases / 1000 pop") +
+   labs(title = "Covid-19 cases versus Non-white population proportion in U.S. counties in 30-Nov-2020",
+                      caption = "Data source: US Census and New York Times" ) +
+   scale_y_continuous(limits = c(0, 1000)) +
+     geom_smooth(method='lm', formula= y~x) +
+    theme_bw()
+
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Graphically, the association between Cases/1000 pop does not seem very strong. Let's see how an OLS model capture this relationship. 
+</div>
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 4
+model4 = lm(cases_per_1000ppl~non_white_proportion + as.factor(state), data = clean_df )
+summ(model4)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+In this model, non-white District population proportion does not explain the variability in cases. We had to control the model from state dummy variables because, as we have seen from previous models, state-wide factors (possibly policies, such as lockdowns and other health regulations) are statistically significant in explaining the variability in cases  (p<0.00). 
+</div>
+
+
+#Question 7
+What about the variability in deaths? Does non-white county population proportion help explain the variability in deaths by covid-19?
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating proportions for ethnicity 
+clean_df <- clean_df %>%
+  mutate(deaths_per_1000ppl = ((clean_df$deaths / clean_df$total_population)*1000))
+
+
+# Creating the scatter plot of Deaths / 1000 ppl over Homeworkers / 1000 ppl
+
+clean_df %>% 
+   ggplot(aes(x = non_white_proportion, y = deaths_per_1000ppl) ) +
+   geom_point(color = "dark blue") +
+   xlab("Non-White Population Proportion within the county") + 
+   ylab("deaths / 1000 pop") +
+   labs(title = "Covid-19 deaths versus Non-white population proportion in U.S. counties in 30-Nov-2020",
+                      caption = "Data source: US Census and New York Times" ) +
+        geom_smooth(method='lm', formula= y~x) +
+    theme_bw()
+
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+Once again, the relationship does not seem very strong (at least, not graphically). Let's explore the relationship between death/1000 pop and Non-white county population proportion with an OLS model, controlling for state-wide  factors. 
+</div>
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 5
+model5 = lm(deaths_per_1000ppl~non_white_proportion + as.factor(state), data = clean_df )
+summ(model5)
+```
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+As we had anticipated, non-white population proportion does not explain thew variability in deaths/1000 population at the county level.
+
+Intuitively, health insurance coverage might increase access to health care, potentially affecting deaths by covid-19. In the next models, we will include insurance coverage and poverty line (as a proxy for the ability to cover out-of-pocket health expenditures) in our model. 
+</div>
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the lm 6
+model6 = lm(deaths_per_1000ppl~non_white_proportion + as.factor(state) + percent_no_health_insurance + percent_below_poverty_level, data = clean_df )
+summ(model6)
+```
+
+
+## Comparing Models 5, and 6
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Creating the Comparative table
+export_summs(model5, model6, model.names = c("Model 5","Model 6"))
+
+```
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "light blue">
+DISCUSSION:
+When we started to explore the variability in Deaths/1000 population, we did not see 'Non-white pop proportion' as an statistically significant explanatory variable (model 5). However, when we control for county 'population proportion without health insurance' and 'percentage below poverty line', we do see an significant association between the variability in deaths and the non-white proportion. 
+</div>
+
+
+
+
+#Exploring the variability of COVID-19 Cases & Deaths over time
+So far, we have been exploring the cross section data of Covid-19 deaths and cases in 30-Nov-2020. 
+We will explore the longitudinal variation in Cases and Deaths by State over time, since the beginning of the pandemic. 
+
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+
+# Importing the longitudinal data set
+
+library(readr)
+long_df <- read_csv("United_States_COVID-19_Cases_and_Deaths_by_State_over_Time.csv")
+head(long_df)
+```
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+#Adding potential explanatory variables from 'clean_df' to 'long_df'
+temp_df <- clean_df %>%
+   group_by(State) %>%
+   summarise(mean_health_insurance = mean(percent_no_health_insurance, na.rm = TRUE), mean_pop_density = mean(pop_density_sq_km, na.rm = TRUE), mean_non_white_proportion = mean(non_white_proportion, na.rm = TRUE), mean_always_mask_usage = mean(ALWAYS, na.rm = TRUE), mean_percent_below_poverty_level = mean(percent_below_poverty_level, na.rm = TRUE)) %>%  
+   ungroup()
+
+#Renaming the joint in 'temp_df' to match the one in 'long_df'
+temp_df <- rename(temp_df, "state" = "State")
+head(temp_df)
+
+#Reordering columns
+long_df <- long_df[c(1,3,4,5,6,7,8,9,10,11,12,14,14,15,2 )]
+long_df <- long_df[-c(11,12,13)]
+
+temp_df$state[c(1:52)] <- c("AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY")
+
+```
+
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+#Adding the population to the new_cases df
+long_df <- long_df %>%
+   inner_join(temp_df, by = "state") 
+head(long_df)
+```
+
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Estimating TOTAL CASES using clustered SEs at the State level
+library(estimatr)
+Model_7 <- estimatr::lm_robust(tot_cases ~ mean_pop_density + mean_always_mask_usage + mean_percent_below_poverty_level + mean_non_white_proportion, data = long_df, clusters= state)
+summary(Model_7)
+
+```
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Estimating NEW CASES using clustered SEs at the State level
+
+Model_8 <- estimatr::lm_robust(new_case ~ mean_pop_density + mean_always_mask_usage + mean_percent_below_poverty_level + mean_non_white_proportion, data = long_df, clusters= state)
+summary(Model_8)
+```
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Estimating TOTAL DEATHS using clustered SEs at the State level
+
+Model_9 <- estimatr::lm_robust(tot_death ~ mean_pop_density + mean_always_mask_usage + mean_percent_below_poverty_level + mean_non_white_proportion, data = long_df, clusters= state)
+summary(Model_9)
+```
+
+``````{r, message=FALSE, warning = FALSE, echo = FALSE}
+# Estimating NEW DEATHS using clustered SEs at the State level
+
+Model_10 <- estimatr::lm_robust(new_death ~ mean_pop_density + mean_always_mask_usage + mean_percent_below_poverty_level + mean_non_white_proportion, data = long_df, clusters= state)
+summary(Model_10)
+```
+
