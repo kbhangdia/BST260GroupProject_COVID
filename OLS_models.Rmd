@@ -401,7 +401,7 @@ summary(Model_9)
 ```
 
 ``````{r, message=FALSE, warning = FALSE, echo = FALSE}
-# Estimating NEW DEATHS using clustered SEs at the State level
+#Estimating NEW DEATHS using clustered SEs at the State level
 
 Model_10 <- estimatr::lm_robust(new_death ~ mean_pop_density + mean_always_mask_usage + mean_percent_below_poverty_level + mean_non_white_proportion, data = long_df, clusters= state)
 summary(Model_10)
